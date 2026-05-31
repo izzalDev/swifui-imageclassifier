@@ -1,0 +1,27 @@
+# macOS
+.DS_Store
+
+# XcodeGen generated project
+*.xcodeproj
+
+# Xcode user-specific data
+xcuserdata/
+*.xcuserstate
+
+# Swift Package Manager / build artifacts
+.build/
+
+# Tuist generated files
+tuist-derived/
+
+# Editor / local tooling
+.nvim/
+buildServer.json
+
+# Logs & reports
+*.log
+*.xcresult
+
+# Temporary files
+tmp/
+temp/

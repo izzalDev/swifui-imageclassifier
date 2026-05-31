@@ -1,0 +1,40 @@
+name: ImageClassifier
+options:
+  bundleIdPrefix: io.github.izzaldev
+  deploymentTarget:
+    iOS: "17.0"
+
+packages:
+  HotSwiftUI:
+    github: johnno1962/HotSwiftUI
+    from: 1.2.5
+  InjectionNext:
+    github: johnno1962/InjectionNext
+    from: 2.0.0
+
+targets:
+  ImageClassifier:
+    type: application
+    platform: iOS
+    sources:
+      - Sources
+    dependencies:
+      - package: HotSwiftUI
+      - package: InjectionNext
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: io.github.izzaldev.imageclassifier
+        SWIFT_VERSION: 6.0
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+      configs:
+        debug:
+          EMIT_FRONTEND_COMMAND_LINES: YES
+          SWIFT_COMPILATION_MODE: singlefile
+          OTHER_LDFLAGS:
+            - $(inherited)
+            - "-Xlinker"
+            - "-interposable"
+        release:
+          SWIFT_COMPILATION_MODE: wholemodule
