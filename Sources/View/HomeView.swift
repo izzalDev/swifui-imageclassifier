@@ -11,7 +11,8 @@ struct HomeView: View {
           Image(uiImage: croppedImage)
             .resizable()
             .aspectRatio(contentMode: .fit)
-            .frame(width: 300, height: 400)
+            .frame(width: 300, height: 300)
+            .background(.black)
         } else {
           Text("No Image is Selected")
             .font(.caption)

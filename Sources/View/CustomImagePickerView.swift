@@ -16,6 +16,12 @@ extension View {
       self
     }
   }
+
+  @ViewBuilder
+  func frame(_ size: CGSize) -> some View {
+    self
+      .frame(width: size.width, height: size.height)
+  }
 }
 
 private struct CustomImagePicker<Content: View>: View {
@@ -70,6 +76,15 @@ private struct CustomImagePicker<Content: View>: View {
           }
         }
         .presentationDetents([.height(200)])
+      }
+      .fullScreenCover(isPresented: $showCropView) {
+        selectedImage = nil
+      } content: {
+        CropView(crop: selectedCroptype, image: selectedImage) { image, status in
+          if status {
+            croppedImage = image
+          }
+        }
       }
       .enableInjection()
   }
