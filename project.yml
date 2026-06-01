@@ -8,9 +8,9 @@ packages:
   HotSwiftUI:
     github: johnno1962/HotSwiftUI
     from: 1.2.5
-  InjectionNext:
-    github: johnno1962/InjectionNext
-    from: 2.0.0
+  InjectionLite:
+    github: johnno1962/InjectionLite
+    branch: main
 
 targets:
   ImageClassifier:
@@ -18,9 +18,10 @@ targets:
     platform: iOS
     sources:
       - Sources
+      - Resources
     dependencies:
       - package: HotSwiftUI
-      - package: InjectionNext
+      - package: InjectionLite
     settings:
       base:
         GENERATE_INFOPLIST_FILE: YES
@@ -28,13 +29,21 @@ targets:
         SWIFT_VERSION: 6.0
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        EMIT_FRONTEND_COMMAND_LINES: YES
       configs:
         debug:
-          EMIT_FRONTEND_COMMAND_LINES: YES
-          SWIFT_COMPILATION_MODE: singlefile
+          SWIFT_COMPILATION_MODE: incremental
           OTHER_LDFLAGS:
             - $(inherited)
             - "-Xlinker"
             - "-interposable"
         release:
           SWIFT_COMPILATION_MODE: wholemodule
+schemes:
+  ImageClassifier:
+    build:
+      targets:
+        ImageClassifier: all
+    run:
+      environmentVariables:
+        INJECTION_DIRECTORIES: $SRCROOT

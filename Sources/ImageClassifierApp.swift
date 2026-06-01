@@ -8,7 +8,7 @@ import SwiftUI
 struct YourAppApp: App {
   init() {
     #if DEBUG
-      Bundle(path: "/Applications/InjectionNext.app/Contents/Resources/iOSInjection.bundle")?.load()
+      setenv("INJECTION_DIRECTORIES", "/Users/izzal/Repositories/ImageClassifier", 1)
     #endif
   }
 
