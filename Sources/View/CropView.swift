@@ -79,9 +79,7 @@ struct CropView: View {
             .overlay(content: { Grids() })
             .frame(width: cropSize.width, height: cropSize.height)
             .clipShape(
-              crop == .circle
-                ? AnyShape(Circle())
-                : AnyShape(Rectangle())
+              AnyShape(Rectangle())
             )
         }
       }

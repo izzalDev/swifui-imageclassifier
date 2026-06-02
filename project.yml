@@ -2,8 +2,7 @@ name: ImageClassifier
 options:
   bundleIdPrefix: io.github.izzaldev
   deploymentTarget:
-    iOS: "17.0"
-
+    iOS: "18.0"
 packages:
   HotSwiftUI:
     github: johnno1962/HotSwiftUI
@@ -11,7 +10,9 @@ packages:
   InjectionLite:
     github: johnno1962/InjectionLite
     branch: main
-
+  onnxruntime-swift-package-manager:
+    github: microsoft/onnxruntime-swift-package-manager
+    from: 1.24.2
 targets:
   ImageClassifier:
     type: application
@@ -22,6 +23,8 @@ targets:
     dependencies:
       - package: HotSwiftUI
       - package: InjectionLite
+      - package: onnxruntime-swift-package-manager
+        product: onnxruntime
     settings:
       base:
         GENERATE_INFOPLIST_FILE: YES
