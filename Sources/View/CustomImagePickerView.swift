@@ -1,88 +1,63 @@
-import PhotosUI
 import SwiftUI
+import UniformTypeIdentifiers
 
 extension View {
   @ViewBuilder
   func cropImagePicker(
-    options: [Crop],
     show: Binding<Bool>,
     croppedImage: Binding<UIImage?>
   ) -> some View {
     CustomImagePicker(
-      options: options,
       show: show,
       croppedImage: croppedImage
     ) {
       self
     }
   }
-
-  @ViewBuilder
-  func frame(_ size: CGSize) -> some View {
-    self
-      .frame(width: size.width, height: size.height)
-  }
 }
 
 private struct CustomImagePicker<Content: View>: View {
   @ObserveInjection var injection
-
   var content: Content
-  var options: [Crop]
+
   @Binding var show: Bool
   @Binding var croppedImage: UIImage?
-  @State private var photosItem: PhotosPickerItem?
-  @State private var selectedImage: UIImage?
-  @State private var showDialog: Bool = false
-  @State private var selectedCroptype: Crop = .circle
+
+  @State private var imageToCrop: UIImage?
   @State private var showCropView: Bool = false
 
   init(
-    options: [Crop], show: Binding<Bool>, croppedImage: Binding<UIImage?>,
+    show: Binding<Bool>, croppedImage: Binding<UIImage?>,
     @ViewBuilder content: @escaping () -> Content
   ) {
     self.content = content()
     self._show = show
     self._croppedImage = croppedImage
-    self.options = options
   }
+
   var body: some View {
     content
-      .photosPicker(isPresented: $show, selection: $photosItem)
-      .onChange(of: photosItem) { oldValue, newValue in
-        if let newValue {
-          Task {
-            if let imageData = try? await newValue.loadTransferable(type: Data.self),
-              let image =
-                UIImage(data: imageData)
-            {
-              await MainActor.run(body: {
-                selectedImage = image
-                showDialog.toggle()
-              })
-            }
+      .fileImporter(
+        isPresented: $show,
+        allowedContentTypes: [.image],
+        allowsMultipleSelection: false
+      ) { result in
+        if case .success(let urls) = result, let url = urls.first {
+          let gotAccess = url.startAccessingSecurityScopedResource()
+          if let data = try? Data(contentsOf: url), let image = UIImage(data: data) {
+            self.imageToCrop = image
+            self.showCropView = true
           }
+          if gotAccess { url.stopAccessingSecurityScopedResource() }
         }
-      }
-      .sheet(isPresented: $showDialog) {
-        VStack {
-          ForEach(options.indices, id: \.self) { index in
-            Button(options[index].name()) {
-              selectedCroptype = options[index]
-              showCropView.toggle()
-              showDialog = false
-            }
-            .padding()
-          }
-        }
-        .presentationDetents([.height(200)])
       }
       .fullScreenCover(isPresented: $showCropView) {
-        selectedImage = nil
-      } content: {
-        CropView(crop: selectedCroptype, image: selectedImage) { image, status in
-          if status {
-            croppedImage = image
+        if let image = imageToCrop {
+          CropView(image: image) { result, status in
+            if status {
+              croppedImage = result
+            }
+            imageToCrop = nil
           }
         }
       }
