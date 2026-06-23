@@ -6,6 +6,7 @@ struct HistoryEntry: Identifiable, Codable {
   let topLabel: String
   let topConfidence: Float
   let results: [StoredResult]
+  let model: ModelType
   var imageData: Data?
 
   init(
@@ -14,6 +15,7 @@ struct HistoryEntry: Identifiable, Codable {
     topLabel: String,
     topConfidence: Float,
     results: [StoredResult],
+    model: ModelType = AppSettings.shared.selectedModel,
     imageData: Data? = nil
   ) {
     self.id = id
@@ -21,6 +23,7 @@ struct HistoryEntry: Identifiable, Codable {
     self.topLabel = topLabel
     self.topConfidence = topConfidence
     self.results = results
+    self.model = model
     self.imageData = imageData
   }
 
@@ -38,9 +41,7 @@ struct StoredResult: Codable {
 @Observable
 final class HistoryStore: @unchecked Sendable {
   static let shared = HistoryStore()
-
   var entries: [HistoryEntry] = []
-
   private let saveKey = "history_entries"
 
   private init() {

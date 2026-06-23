@@ -1,15 +1,15 @@
 import Foundation
 
-enum ModelType: String, CaseIterable {
+enum ModelType: String, CaseIterable, Codable {
   case svm = "svm"
   case caeSVM = "cae_svm"
 
   var displayName: String {
     switch self {
     case .svm:
-      return "SVM Classifier"
+      return "SVM"
     case .caeSVM:
-      return "CAE-SVM Classifier"
+      return "CAE-SVM"
     }
   }
 
@@ -18,6 +18,7 @@ enum ModelType: String, CaseIterable {
   }
 }
 
+@Observable
 final class AppSettings: @unchecked Sendable {
   static let shared = AppSettings()
 

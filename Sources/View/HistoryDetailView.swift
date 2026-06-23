@@ -51,6 +51,12 @@ struct HistoryDetailView: View {
               label: "Time",
               value: entry.date.formatted(date: .omitted, time: .complete)
             )
+            Divider().padding(.horizontal, 14)
+            metaRow(
+              icon: "cpu",
+              label: "Model",
+              value: entry.model.displayName
+            )
           }
           .background(Color.surface)
           .clipShape(RoundedRectangle(cornerRadius: 14))

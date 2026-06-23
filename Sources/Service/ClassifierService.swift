@@ -19,6 +19,7 @@ final class ClassifierService: @unchecked Sendable {
 
   private let labels = ["Ak", "Kapadokya", "Nurlu", "Sira"]
   private let inputSize = 128
+  private var env: ORTEnv?
   private var session: ORTSession?
   private var currentModel: String?
 
@@ -48,13 +49,13 @@ final class ClassifierService: @unchecked Sendable {
     let selectedModel = AppSettings.shared.selectedModel
 
     do {
-      guard let modelPath = Bundle.main.path(forResource: selectedModel.fileName, ofType: "onnx") else {
+      guard let modelPath = Bundle.main.path(forResource: selectedModel.fileName, ofType: "onnx")
+      else {
         print("❌ Model not found in bundle")
         return
       }
       let env = try ORTEnv(loggingLevel: ORTLoggingLevel.warning)
       let options = try ORTSessionOptions()
-
 
       session = try ORTSession(env: env, modelPath: modelPath, sessionOptions: options)
       currentModel = selectedModel.fileName
