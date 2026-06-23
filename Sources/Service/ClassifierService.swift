@@ -20,17 +20,45 @@ final class ClassifierService: @unchecked Sendable {
   private let labels = ["Ak", "Kapadokya", "Nurlu", "Sira"]
   private let inputSize = 128
   private var session: ORTSession?
+  private var currentModel: String?
 
   private init() {
+    setupModel()
+    setupNotificationObserver()
+  }
+
+  deinit {
+    NotificationCenter.default.removeObserver(self)
+  }
+
+  private func setupNotificationObserver() {
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(handleModelChange),
+      name: .modelDidChange,
+      object: nil
+    )
+  }
+
+  @objc private func handleModelChange() {
+    setupModel()
+  }
+
+  private func setupModel() {
+    let selectedModel = AppSettings.shared.selectedModel
+
     do {
-      guard let modelPath = Bundle.main.path(forResource: "cae_svm", ofType: "onnx") else {
+      guard let modelPath = Bundle.main.path(forResource: selectedModel.fileName, ofType: "onnx") else {
         print("❌ Model not found in bundle")
         return
       }
       let env = try ORTEnv(loggingLevel: ORTLoggingLevel.warning)
       let options = try ORTSessionOptions()
+
+
       session = try ORTSession(env: env, modelPath: modelPath, sessionOptions: options)
-      print("✅ ONNX session ready")
+      currentModel = selectedModel.fileName
+      print("✅ ONNX session ready with model: \(selectedModel.displayName)")
     } catch {
       print("❌ Failed to init session: \(error)")
     }

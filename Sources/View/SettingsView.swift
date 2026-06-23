@@ -9,9 +9,9 @@ struct SettingsView: View {
     NavigationStack {
       List {
         classificationSection
+        modelSection  // Pindah ke atas agar lebih terlihat
         historySection
         feedbackSection
-        modelSection
         aboutSection
       }
       .listStyle(.insetGrouped)
@@ -72,6 +72,54 @@ struct SettingsView: View {
       )
     } header: {
       sectionHeader("Classification")
+    }
+    .listRowBackground(Color.surface)
+  }
+
+  // MARK: - Model Section
+
+  private var modelSection: some View {
+    @Bindable var vm = viewModel
+    return Section {
+      Picker(selection: $vm.settings.selectedModel) {
+        ForEach(ModelType.allCases, id: \.self) { model in
+          Text(model.displayName)
+            .tag(model)
+        }
+      } label: {
+        Label {
+          Text("Model")
+            .font(.subheadline)
+            .foregroundStyle(Color.textPrimary)
+        } icon: {
+          settingsIcon("cpu.fill", color: Color(hex: "#7a48b0"))
+        }
+      }
+      .tint(Color.accent)
+      .onChange(of: vm.settings.selectedModel) { _, _ in
+        // Model akan otomatis reload via NotificationCenter
+      }
+
+      infoRow(
+        icon: "scale.3d",
+        iconColor: Color(hex: "#3070b0"),
+        title: "Format",
+        value: "ONNX"
+      )
+      infoRow(
+        icon: "photo.artframe",
+        iconColor: Color(hex: "#30908a"),
+        title: "Input Size",
+        value: "128 × 128 px"
+      )
+      infoRow(
+        icon: "tag.fill",
+        iconColor: Color(hex: "#b07830"),
+        title: "Classes",
+        value: "Ak · Kapadokya · Nurlu · Sira"
+      )
+    } header: {
+      sectionHeader("Model")
     }
     .listRowBackground(Color.surface)
   }
@@ -138,40 +186,6 @@ struct SettingsView: View {
       )
     } header: {
       sectionHeader("Feedback")
-    }
-    .listRowBackground(Color.surface)
-  }
-
-  // MARK: - Model Section
-
-  private var modelSection: some View {
-    Section {
-      infoRow(
-        icon: "cpu",
-        iconColor: Color(hex: "#7a48b0"),
-        title: "Model",
-        value: "CAE + SVM"
-      )
-      infoRow(
-        icon: "scale.3d",
-        iconColor: Color(hex: "#3070b0"),
-        title: "Format",
-        value: "ONNX"
-      )
-      infoRow(
-        icon: "photo.artframe",
-        iconColor: Color(hex: "#30908a"),
-        title: "Input Size",
-        value: "128 × 128 px"
-      )
-      infoRow(
-        icon: "tag.fill",
-        iconColor: Color(hex: "#b07830"),
-        title: "Classes",
-        value: "Ak · Kapadokya · Nurlu · Sira"
-      )
-    } header: {
-      sectionHeader("Model Info")
     }
     .listRowBackground(Color.surface)
   }
