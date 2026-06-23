@@ -17,6 +17,17 @@ extension Color {
   static let ak = Color(hex: "#a07848")
   static let kapadokya = Color(hex: "#4a7a40")
   static let sira = Color(hex: "#7a6848")
+
+  /// Returns the brand color associated with an almond variety label.
+  static func labelColor(for label: String) -> Color {
+    switch label {
+    case "Ak": return .ak
+    case "Kapadokya": return .kapadokya
+    case "Nurlu": return .nurlu
+    case "Sira": return .sira
+    default: return .gray
+    }
+  }
 }
 
 extension UIColor {

@@ -2,16 +2,10 @@ import SwiftUI
 
 struct HomeView: View {
   @ObserveInjection var injection
-  @State private var croppedImage: UIImage?
-  @State private var show: Bool = false
-  @State private var isAnalyzing: Bool = false
-  @State private var results: [(label: String, confidence: Float, color: Color)] = []
-
-  var topResult: (label: String, confidence: Float, color: Color)? {
-    results.max(by: { $0.confidence < $1.confidence })
-  }
+  @State private var viewModel = HomeViewModel()
 
   var body: some View {
+    @Bindable var vm = viewModel
     NavigationStack {
       ScrollView {
         VStack(spacing: 14) {
@@ -29,7 +23,7 @@ struct HomeView: View {
       .toolbar {
         ToolbarItem(placement: .navigationBarTrailing) {
           Button {
-            show = true
+            viewModel.showPicker = true
           } label: {
             Image(systemName: "photo.on.rectangle.angled")
               .font(.callout)
@@ -37,16 +31,19 @@ struct HomeView: View {
         }
       }
       .cropImagePicker(
-        show: $show,
-        croppedImage: $croppedImage
+        show: $vm.showPicker,
+        croppedImage: $vm.croppedImage
       )
+      .sheet(item: $vm.selectedEntry) { entry in
+        HistoryDetailView(entry: entry)
+      }
     }
     .enableInjection()
   }
 
   private var uploadCard: some View {
     VStack {
-      if let croppedImage = croppedImage {
+      if let croppedImage = viewModel.croppedImage {
         Image(uiImage: croppedImage)
           .resizable()
           .aspectRatio(contentMode: .fit)
@@ -72,36 +69,21 @@ struct HomeView: View {
 
   private var analyzeButton: some View {
     Button {
-      guard let image = croppedImage else { return }
-      isAnalyzing = true
-      Task.detached(priority: .userInitiated) {
-        do {
-          let classResults = try ClassifierService.shared.classify(image: image)
-          await MainActor.run {
-            results = classResults.map { result in
-              (result.label, result.confidence, colorFor(result.label))
-            }
-            isAnalyzing = false
-          }
-        } catch {
-          print("❌ Classification error: \(error)")
-          await MainActor.run { isAnalyzing = false }
-        }
-      }
+      viewModel.analyze()
     } label: {
-      if isAnalyzing {
+      if viewModel.isAnalyzing {
         ProgressView().tint(.textSecondary)
       } else {
         Text("Analyze Image")
       }
     }
     .buttonStyle(.primaryButton)
-    .disabled(croppedImage == nil || isAnalyzing)
+    .disabled(viewModel.croppedImage == nil || viewModel.isAnalyzing)
   }
 
   @ViewBuilder
   private var resultSection: some View {
-    if !results.isEmpty {
+    if !viewModel.results.isEmpty {
       VStack(alignment: .leading, spacing: 6) {
         sectionLabel("Result")
 
@@ -111,7 +93,7 @@ struct HomeView: View {
               .font(.caption)
               .foregroundStyle(Color.textSecondary)
             Spacer()
-            if let top = topResult {
+            if let top = viewModel.topResult {
               Text("\(Int(top.confidence * 100))% confidence")
                 .font(.caption).fontWeight(.semibold)
                 .foregroundStyle(.green)
@@ -126,12 +108,12 @@ struct HomeView: View {
 
           Divider().padding(.horizontal, 14)
 
-          ForEach(results, id: \.label) { item in
+          ForEach(viewModel.results, id: \.label) { item in
             ClassRow(
               label: item.label,
               confidence: item.confidence,
               color: item.color,
-              isTop: item.label == topResult?.label
+              isTop: item.label == viewModel.topResult?.label
             )
           }
         }
@@ -153,31 +135,32 @@ struct HomeView: View {
       .padding(.horizontal, 4)
   }
 
+  @ViewBuilder
   private var recentSection: some View {
-    VStack(alignment: .leading, spacing: 6) {
-      sectionLabel("Recent")
+    let recent = viewModel.recentEntries
+    if !recent.isEmpty {
+      VStack(alignment: .leading, spacing: 6) {
+        sectionLabel("Recent")
 
-      VStack(spacing: 0) {
-        RecentRow(label: "Ak", time: "2 min ago", confidence: 0.88)
-        Divider().padding(.leading, 56)
-        RecentRow(label: "Kapadokya", time: "15 min ago", confidence: 0.76)
+        VStack(spacing: 0) {
+          ForEach(Array(recent.enumerated()), id: \.element.id) { index, entry in
+            EntryRow(
+              entry: entry,
+              timeString: entry.date.formatted(.relative(presentation: .named))
+            )
+            .onTapGesture { viewModel.selectedEntry = entry }
+            if index < recent.count - 1 {
+              Divider().padding(.leading, 66)
+            }
+          }
+        }
+        .background(Color.surface)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(
+          RoundedRectangle(cornerRadius: 14)
+            .stroke(Color(.separator), lineWidth: 0.5)
+        )
       }
-      .background(Color.surface)
-      .clipShape(RoundedRectangle(cornerRadius: 14))
-      .overlay(
-        RoundedRectangle(cornerRadius: 14)
-          .stroke(Color(.separator), lineWidth: 0.5)
-      )
-    }
-  }
-
-  private func colorFor(_ label: String) -> Color {
-    switch label {
-    case "Ak": return .ak
-    case "Kapadokya": return .kapadokya
-    case "Nurlu": return .nurlu
-    case "Sira": return .sira
-    default: return .gray
     }
   }
 }
@@ -208,48 +191,6 @@ private struct ClassRow: View {
         .fontWeight(isTop ? .semibold : .regular)
         .foregroundStyle(isTop ? Color.textPrimary : Color.textSecondary)
         .frame(width: 32, alignment: .trailing)
-    }
-    .padding(.horizontal, 14)
-    .padding(.vertical, 14)
-    .enableInjection()
-  }
-}
-
-private struct RecentRow: View {
-  let label: String
-  let time: String
-  let confidence: Float
-  @ObserveInjection var injection
-
-  var body: some View {
-    HStack(spacing: 10) {
-      RoundedRectangle(cornerRadius: 8)
-        .fill(Color(.systemGray5))
-        .frame(width: 36, height: 36)
-        .overlay(
-          Image(systemName: "photo")
-            .font(.system(size: 14))
-            .foregroundStyle(Color.textSecondary)
-        )
-
-      VStack(alignment: .leading, spacing: 2) {
-        Text(label)
-          .font(.subheadline)
-          .fontWeight(.medium)
-          .foregroundStyle(Color.textPrimary)
-        Text(time)
-          .font(.caption).foregroundStyle(Color.textSecondary)
-      }
-
-      Spacer()
-
-      Text("\(Int(confidence * 100))%")
-        .font(.subheadline)
-        .foregroundStyle(Color.textSecondary)
-
-      Image(systemName: "chevron.right")
-        .font(.caption).fontWeight(.semibold)
-        .foregroundStyle(Color.textTertiary)
     }
     .padding(.horizontal, 14)
     .padding(.vertical, 14)

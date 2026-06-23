@@ -20,10 +20,10 @@ struct YourAppApp: App {
           HomeView()
         }
         Tab("History", systemImage: "clock.arrow.trianglehead.counterclockwise.rotate.90") {
-          HomeView()
+          HistoryView()
         }
         Tab("Settings", systemImage: "gearshape.fill") {
-          HomeView()
+          SettingsView()
         }
       }
       .tint(.accent)
